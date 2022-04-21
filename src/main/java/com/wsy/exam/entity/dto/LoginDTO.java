@@ -1,22 +1,20 @@
 package com.wsy.exam.entity.dto;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.wsy.exam.entity.Role;
-import com.wsy.exam.utils.CustomAuthorityDeserializer;
-import io.swagger.annotations.Api;
+import com.alibaba.fastjson.annotation.JSONField;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.beans.factory.annotation.Required;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.ArrayList;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @className: com.wsy.exam.entity.dto-> LoginDTO
@@ -26,11 +24,13 @@ import java.util.List;
  * @version: 1.0
  * @todo:
  */
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Data
 @ApiModel("登录数据传输模型")
-public class LoginDTO implements UserDetails {
+public class LoginDTO implements UserDetails, Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     @ApiModelProperty("学号")
     private String username;
@@ -38,27 +38,28 @@ public class LoginDTO implements UserDetails {
     @ApiModelProperty("用户密码")
     private String password;
 
-    @ApiModelProperty("用户角色")
-    private String role;
+    @ApiModelProperty("验证码")
+    private String code;
 
-    @ApiModelProperty("记住我")
-    private Boolean rememberMe;
+    @ApiModelProperty("验证码uuid")
+    private String uuid;
 
-    Collection<? extends GrantedAuthority> authorities;
+    //存储权限信息
+    private List<String> permissions;
 
-    public LoginDTO(String username, String password, String role, Collection<? extends GrantedAuthority> authorities) {
-        this.username = username;
-        this.password = password;
-        this.role = role;
-        this.authorities = authorities;
-    }
+
+    //存储SpringSecurity所需要的权限信息的集合
+    private List<GrantedAuthority> authorities;
 
     @Override
-    @JsonDeserialize(using = CustomAuthorityDeserializer.class)
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-        SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_"+this.role);
-        authorities.add(authority);
+        if (authorities != null) {
+            return authorities;
+        }
+        //把permissions中字符串类型的权限信息转换成GrantedAuthority对象存入authorities中
+        authorities = permissions.stream().
+                map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
         return authorities;
     }
 
@@ -91,5 +92,6 @@ public class LoginDTO implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
+
 
 }

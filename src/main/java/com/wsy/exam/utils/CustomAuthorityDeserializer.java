@@ -26,7 +26,7 @@ public class CustomAuthorityDeserializer extends JsonDeserializer {
     public Object deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
         ObjectMapper mapper = (ObjectMapper) p.getCodec();
         JsonNode jsonNode = mapper.readTree(p);
-        LinkedList<GrantedAuthority> grantedAuthorities = new LinkedList<>();
+        List<GrantedAuthority> grantedAuthorities = new LinkedList<>();
         Iterator<JsonNode> elements = jsonNode.elements();
         while (elements.hasNext()) {
             JsonNode next = elements.next();

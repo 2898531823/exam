@@ -1,9 +1,7 @@
 package com.wsy.exam.service;
 
-import com.wsy.exam.entity.Role;
+import com.wsy.exam.entity.RoleMenu;
 import com.baomidou.mybatisplus.extension.service.IService;
-
-import java.util.List;
 
 /**
  * <p>
@@ -11,7 +9,8 @@ import java.util.List;
  * </p>
  *
  * @author wsy
- * @since 2022-04-08
+ * @since 2022-04-20
  */
-public interface IRoleService extends IService<Role> {
+public interface IRoleMenuService extends IService<RoleMenu> {
+
 }

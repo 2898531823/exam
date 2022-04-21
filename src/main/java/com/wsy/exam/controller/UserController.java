@@ -13,7 +13,7 @@ import javax.annotation.Resource;
 
 /**
  * <p>
- *  前端控制器
+ * 前端控制器
  * </p>
  *
  * @author wsy
@@ -29,19 +29,15 @@ public class UserController {
 
 
     @ApiOperation("登录")
-    @ApiImplicitParam(name = "loginDTO",value = "用户登陆所需字段")
+    @ApiImplicitParam(name = "loginDTO", value = "用户登陆所需字段")
     @PostMapping("/login")
-    public String login(@RequestBody LoginDTO loginDTO)
-    {
-
-        System.out.println("收到请求");
+    public R login(@RequestBody LoginDTO loginDTO) {
         return userService.login(loginDTO);
     }
 
-    @GetMapping("test")
-    String test()
-    {
-        System.out.println("ssssssssssss");
-        return "hello";
+    @GetMapping("/logout")
+    @ApiOperation("注销")
+    public R logout() {
+        return userService.logout();
     }
 }

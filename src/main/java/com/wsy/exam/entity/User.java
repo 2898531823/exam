@@ -42,10 +42,6 @@ public class User implements Serializable {
     @TableField("password")
     private String password;
 
-    @ApiModelProperty("用户角色")
-    @TableField("role")
-    private String role;
-
     @ApiModelProperty("用户所属院系id")
     @TableField("department_id")
     private Integer departmentId;

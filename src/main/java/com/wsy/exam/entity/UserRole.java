@@ -1,6 +1,5 @@
 package com.wsy.exam.entity;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
@@ -15,27 +14,22 @@ import lombok.Setter;
  * </p>
  *
  * @author wsy
- * @since 2022-04-08
+ * @since 2022-04-20
  */
 @Getter
 @Setter
-@TableName("role")
-@ApiModel(value = "Role对象", description = "")
-public class Role implements Serializable {
+@TableName("user_role")
+@ApiModel(value = "UserRole对象", description = "")
+public class UserRole implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    @ApiModelProperty("用户id")
+    @TableId("user_id")
+    private String userId;
+
     @ApiModelProperty("角色id")
-    @TableId("role_id")
     private Integer roleId;
-
-    @ApiModelProperty("角色名称")
-    @TableField("role_name")
-    private String roleName;
-
-    @ApiModelProperty("角色键")
-    @TableField("role_key")
-    private String roleKey;
 
 
 }

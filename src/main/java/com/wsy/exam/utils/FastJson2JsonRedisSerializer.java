@@ -22,42 +22,46 @@ import java.nio.charset.StandardCharsets;
  */
 public class FastJson2JsonRedisSerializer<T> implements RedisSerializer<T> {
 
-    public static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
+    public static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
 
-    private final Class<T> clazz;
+    private Class<T> clazz;
 
-    static {
+    static
+    {
         ParserConfig.getGlobalInstance().setAutoTypeSupport(true);
-        //如果遇到反序列化autoType is not support错误，请添加并修改一下包名到bean文件路径
-        // ParserConfig.getGlobalInstance().addAccept("com.xxxxx.xxx");
     }
-    public FastJson2JsonRedisSerializer(Class<T> clazz) {
+
+    public FastJson2JsonRedisSerializer(Class<T> clazz)
+    {
         super();
         this.clazz = clazz;
     }
 
     @Override
-    public byte[] serialize(T t) throws SerializationException {
-        if (t == null) {
+    public byte[] serialize(T t) throws SerializationException
+    {
+        if (t == null)
+        {
             return new byte[0];
         }
         return JSON.toJSONString(t, SerializerFeature.WriteClassName).getBytes(DEFAULT_CHARSET);
     }
 
     @Override
-    public T deserialize(byte[] bytes) throws SerializationException {
-        if (bytes == null || bytes.length <= 0) {
+    public T deserialize(byte[] bytes) throws SerializationException
+    {
+        if (bytes == null || bytes.length <= 0)
+        {
             return null;
         }
         String str = new String(bytes, DEFAULT_CHARSET);
 
         return JSON.parseObject(str, clazz);
     }
-    public void setObjectMapper(ObjectMapper objectMapper) {
-        Assert.notNull(objectMapper, "'objectMapper' must not be null");
-    }
 
-    protected JavaType getJavaType(Class<?> clazz) {
+
+    protected JavaType getJavaType(Class<?> clazz)
+    {
         return TypeFactory.defaultInstance().constructType(clazz);
     }
 

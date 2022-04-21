@@ -36,7 +36,7 @@ public class CodeGeneratorTest {
                             .pathInfo(Collections.singletonMap(OutputFile.xml, projectPath + "/src/main/resources/mapper")); // 设置mapperXml生成路径
                 })
                 .strategyConfig(builder -> {
-                    builder.addInclude("user") // 设置需要生成的表名
+                    builder.addInclude("role_menu","user_role") // 设置需要生成的表名
                             .entityBuilder()
                             .enableLombok()
                             .enableTableFieldAnnotation()

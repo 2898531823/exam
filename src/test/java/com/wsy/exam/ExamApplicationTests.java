@@ -1,31 +1,33 @@
 package com.wsy.exam;
 
 
-import com.wsy.exam.entity.User;
-import com.wsy.exam.entity.dto.LoginDTO;
-import com.wsy.exam.mapper.mapStruct.LoginMapper;
+import com.alibaba.fastjson.JSON;
+import com.wsy.exam.mapper.MenuMapper;
 import com.wsy.exam.service.IUserService;
-import com.wsy.exam.service.impl.UserDetailServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 @SpringBootTest
 class ExamApplicationTests {
 
-    @Autowired
-    private IUserService userService;
-    
+    @Resource
+    private MenuMapper menuMapper;
+
 
     @Test
     void contextLoads() {
+        List<String> admin = menuMapper.selectPermsByUserId("admin");
+        System.out.println("admin = " + admin);
 
-        User byId = userService.getById("1851300433");
-        LoginDTO loginDTO = LoginMapper.INSTANCE.toDto(byId);
-        System.out.println("loginDTO = " + loginDTO);
 
     }
 
 }
+
+
+
+

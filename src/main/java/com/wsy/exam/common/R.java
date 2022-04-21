@@ -17,7 +17,7 @@ import java.util.Map;
  */
 @Data
 @ApiModel("统一返回类")
-public class R<T> {
+public class R {
 
     @ApiModelProperty("是否成功")
     private Boolean success;

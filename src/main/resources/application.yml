@@ -6,6 +6,9 @@ spring:
     active: dev
   main:
     allow-circular-references: true
+  messages:
+      # 国际化资源文件路径
+      basename: i18n/messages
 
 server:
   port: 8888

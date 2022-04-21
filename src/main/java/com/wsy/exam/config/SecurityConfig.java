@@ -1,28 +1,27 @@
 package com.wsy.exam.config;
 
-import com.wsy.exam.Filter.JwtAuthenticationFilter;
-import com.wsy.exam.Filter.JwtUsernamePasswordAuthenticationFilter;
-import com.wsy.exam.handler.MyAuthenticationSuccessHandler;
+import com.wsy.exam.Filter.JwtAuthenticationTokenFilter;
+import com.wsy.exam.handler.AccessDeniedHandlerImpl;
+import com.wsy.exam.handler.AuthenticationEntryPointImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsByNameServiceWrapper;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.OncePerRequestFilter;
-
-import javax.annotation.Resource;
-import java.util.Arrays;
+import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationProvider;
 
 /**
  * @className: com.wsy.exam.config-> SecurityConfig
@@ -39,71 +38,93 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     public static String ADMIN = "ROLE_ADMIN";
 
-    public static String USER = "ROLE_USER";
+    public static String TEACHER = "ROLE_TEACHER";
+
+    public static String STUDENT = "ROLE_STUDENT";
+
+    @Autowired
+    private JwtAuthenticationTokenFilter jwtAuthenticationTokenFilter;
+
+    @Autowired
+    private AuthenticationEntryPoint authenticationEntryPoint;
+
+    @Autowired
+    private AccessDeniedHandler accessDeniedHandler;
+
+    @Autowired
+    AuthenticationEntryPointImpl userAuthenticationEntryPointHandler;
 
     @Autowired
     private UserDetailsService userDetailsService;
 
-
-    //放行白名单
-    private final static String[] PERMIT_ALL_MAPPING = {
-
-    };
-
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth.userDetailsService(userDetailsService)
-                .passwordEncoder(passwordEncoder());
+                .passwordEncoder(passwordEncoder())
+                .and().authenticationProvider(preAuthenticatedAuthenticationProvider());
     }
+    @Bean
+    public PreAuthenticatedAuthenticationProvider preAuthenticatedAuthenticationProvider() {
+        PreAuthenticatedAuthenticationProvider preAuthenticatedAuthenticationProvider = new PreAuthenticatedAuthenticationProvider();
+        preAuthenticatedAuthenticationProvider.setPreAuthenticatedUserDetailsService(new UserDetailsByNameServiceWrapper<>(userDetailsService));
+        return preAuthenticatedAuthenticationProvider;
+    }
+
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
 
-        http.formLogin().loginProcessingUrl("/user/login").permitAll()
+        http
+                //关闭csrf
+                .csrf().disable()
+                //禁用session
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and().authorizeRequests()
-                .antMatchers("/admin/**","/doc.html").hasRole("ADMIN")
+                //放心登录接口
+                .antMatchers("/user/login","/user/test","/captcha").anonymous()
+                .antMatchers(
+                        HttpMethod.GET,
+                        "/*.html",
+                        "/**/*.html",
+                        "/**/*.css",
+                        "/**/*.js",
+                        "/*.ico"
+                ).permitAll()
+                .antMatchers("/profile/**").anonymous()
+                .antMatchers("/common/download**").anonymous()
+                .antMatchers("/common/download/resource**").anonymous()
+                .antMatchers("/swagger-ui.html").anonymous()
+                .antMatchers("/swagger-resources/**").anonymous()
+                .antMatchers("/webjars/**").anonymous()
+                .antMatchers("/*/api-docs").anonymous()
+                .antMatchers("/druid/**").anonymous()
                 .anyRequest().authenticated()
-                .and().exceptionHandling().accessDeniedPage("/unauth")
-                .and().addFilterBefore(new JwtAuthenticationFilter(),UsernamePasswordAuthenticationFilter.class)
-                .cors().configurationSource(corsConfigurationSource())
-                .and().csrf().disable();
+                .and().cors();
 
-        http.addFilterAt(jwtUsernamePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
-//        //禁用Session
-//        http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+        //把token校验过滤器添加到过滤器链中
+        http.addFilterBefore(jwtAuthenticationTokenFilter, UsernamePasswordAuthenticationFilter.class);
+
+        //自定义失败处理
+        http.exceptionHandling().authenticationEntryPoint(authenticationEntryPoint).
+                accessDeniedHandler(accessDeniedHandler);
 
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder(){
+    public PasswordEncoder passwordEncoder() {
         /*return new BCryptPasswordEncoder();*/
         return NoOpPasswordEncoder.getInstance();
     }
 
-    //注册自定义的UsernamePasswordAuthenticationFilter
-    @Bean
-    JwtUsernamePasswordAuthenticationFilter jwtUsernamePasswordAuthenticationFilter() throws Exception {
-        JwtUsernamePasswordAuthenticationFilter filter = new JwtUsernamePasswordAuthenticationFilter();
-        filter.setAuthenticationSuccessHandler(new MyAuthenticationSuccessHandler());
-        //filter.setAuthenticationFailureHandler(new FailureHandler());
-        filter.setFilterProcessesUrl("/user/login");
 
-        //这句很关键，重用WebSecurityConfigurerAdapter配置的AuthenticationManager，不然要自己组装AuthenticationManager
-        filter.setAuthenticationManager(authenticationManagerBean());
-        return filter;
+    /**
+     * 获取AuthenticationManager
+     */
+    @Override
+    @Bean
+    public AuthenticationManager authenticationManagerBean() throws Exception {
+        return super.authenticationManagerBean();
     }
 
-    @Bean
-    CorsConfigurationSource corsConfigurationSource(){
-        CorsConfiguration corsConfiguration=new CorsConfiguration();
-        corsConfiguration.setAllowedHeaders(Arrays.asList("*"));
-        corsConfiguration.setAllowedMethods(Arrays.asList("*"));
-        corsConfiguration.setAllowedOrigins(Arrays.asList("*"));
-        corsConfiguration.setMaxAge(3600L);
-        UrlBasedCorsConfigurationSource source=new UrlBasedCorsConfigurationSource();
-        //所有的请求都允许跨域
-        source.registerCorsConfiguration("/**",corsConfiguration);
-        return  source;
-    }
 
 }
